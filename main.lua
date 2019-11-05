@@ -1,16 +1,16 @@
 -- one file because why not
 
 
-local direction_window = 420
+local direction_window = 240
 local generations = 50
-local k = 8
+local k = 4
 local population_size = 32
-local sequence_len = 50000
+local sequence_len = 120000
 
 -- per-individual crossover prob (vs. mutation)
 local crossover_prob = 0.3
 -- per-frame mutation probablity
-local mutation_prob = 0.005
+local mutation_prob = 0.01
 -- per-mutation deletion probablity
 local delete_prob = 0.5
 -- crossover window size in number of frames
@@ -44,7 +44,6 @@ function preamble()
     for i=1,60 do
         emu.frameadvance()
     end
-    print(emu.framecount())
     inputTable = {["Select"] = true, ["B"] = true, ["Up"] = true}
     joypad.set(inputTable)
     for i=1,30 do
@@ -85,12 +84,12 @@ function popcount(val)
 end
 
 
-local locations = {38, 0, 40, 12, 1, 41, 13, 51, 2}
+local locations = {38, 37, 0, 40, 12, 1, 41, 13, 51, 2}
 local map_scores = {}
-local score = 1
+local location_score = 1
 for i,addr in ipairs(locations) do
-    map_scores[addr] = score
-    score = score + 1
+    map_scores[addr] = location_score
+    location_score = location_score + 1
 end 
 
 function calculate_map_score(map_number)
@@ -183,6 +182,15 @@ function in_list(val, list)
     return false
 end
 
+
+function sequence_copy(sequence)
+	new_sequence = {}
+	for i=1,sequence_len do
+		new_sequence[i] = sequence[i]
+	end
+	return new_sequence
+end
+
 function random_button()
     rand = math.random()
 	button = "Nop"
@@ -217,6 +225,7 @@ function random_sequence()
 	for i=1,sequence_len do
 	    sequence[i] = random_button()
 	end
+    assert(sequence_len == #sequence)
 	return sequence
 end
 
@@ -229,29 +238,35 @@ function mutate(sequence)
             rand = math.random()
             if rand < delete_prob then
                 table.remove(sequence, i)
-                table.insert(sequence, random_button)
+                table.insert(sequence, button)
             else
-                sequence[i] = random_button
+                sequence[i] = button
             end
         end    
     end
+    assert(#sequence == sequence_len)
     return sequence
 end
 
 function crossover(sequence_a, sequence_b)
     local new_sequence = {}
-    for i=1,sequence_len,crossover_window do
+    local i = 1
+    while i < sequence_len do
         local rand = math.random()
         if rand > 0.5 then
-            for j=i,i+crossover_window do
+            for j=i,i+crossover_window-1 do
                 table.insert(new_sequence, sequence_a[j])
             end   
         else
-            for j=i,i+crossover_window do
+            for j=i,i+crossover_window-1 do
                 table.insert(new_sequence, sequence_b[j])
             end 
         end
+        i = i + crossover_window
     end
+    assert(#sequence_a == #sequence_b)
+    assert(#new_sequence == #sequence_a)
+    assert(#new_sequence == sequence_len)
     return new_sequence
 end
 
@@ -339,13 +354,13 @@ function choose_crossover(population)
 end
 
 function main()
-	population = {}
+    population = {}
     all_max_score = 0
-	best_score = 0
-	print("initializing population...")
-	for i=1,population_size do
-		population[i] = random_sequence()
-	end
+    best_score = 0
+    print("initializing population...")
+    for i=1,population_size do
+	population[i] = random_sequence()
+    end
     print("population initialized...")
     for gen=1,generations do
         idx_to_score = {}
@@ -357,27 +372,35 @@ function main()
             end
             table.insert(idx_to_score, {['idx']=i, ['res']=res})
             all_max_score = math.max(all_max_score, best_score)
+	    print("score: " .. tostring(res[1]))
             print("best score: " .. tostring(best_score))
         end
         print("getting top k...")
         table.sort(idx_to_score, rank_ab)
         new_population = {}
+        for i=1,population_size do
+            print("ranked score # " .. tostring(i) .. ": " .. tostring(idx_to_score[i]['res'][1]))
+        end
+	    assert(idx_to_score[1]['res'][1] == all_max_score)
         for i=1,k do
             idx = idx_to_score[i]['idx']
+			print(idx)
             new_population[i] = population[idx]
         end
-        for i=k,population_size do
+        for i=k+1,population_size do
+
             local rand = math.random()
             if rand < crossover_prob then
                 print("crossover...")
                 chosen = choose_crossover(new_population)
-                a = chosen['a']
-                b = chosen['b']
+                a = sequence_copy(chosen['a'])
+                b = sequence_copy(chosen['b'])
                 new_population[i] = crossover(a, b)
             else
                 print("mutate...")
                 chosen = new_population[math.random(1,k)]
-                new_population[i] = mutate(chosen)
+				copy = sequence_copy(chosen)	
+                new_population[i] = mutate(copy)
             end
         end
         population = new_population

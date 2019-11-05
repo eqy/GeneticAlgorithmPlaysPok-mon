@@ -1,7 +1,7 @@
 | value | location      | score |
 |-------|---------------|-------|
-|037    |Red's house 1  |   0   |
 |038    |Red's house 2  |   1   |
+|037    |Red's house 1  |   0   |
 |000    |Pallet Town    |   1   |
 |039    |Blue's house   |   0   |
 |040    |Oak's Lab      |   1   |
