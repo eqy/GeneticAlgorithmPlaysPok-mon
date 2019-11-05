@@ -6,13 +6,13 @@ At this point think of it as an electronic aquarium but instead of fish you have
 
 TODOs
 =====
-Add asserts for basic genetic transformations
-Tech documentation (approach, scoring heuristics, etc.)
-Map number table is incomplete
-Genetic Algorithm implementation is untested
-Most heuristics are untested
-Hyperparameters are untuned (repeat ad-infinitum)
-Maybe try seeding with data from an existing speedrun?
++ Add asserts for basic genetic transformations
++ Tech documentation (approach, scoring heuristics, etc.)
++ Map number table is incomplete
++ Genetic Algorithm implementation is untested
++ Most heuristics are untested
++ Hyperparameters are untuned (repeat ad-infinitum)
++ Maybe try seeding with data from an existing speedrun?
 
 Acknowledgements
 ----------------
